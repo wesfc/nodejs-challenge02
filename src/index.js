@@ -9,20 +9,74 @@ app.use(cors());
 
 const users = [];
 
+function checkIfValidUUID(str) {
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  return regexExp.test(str);
+}
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  const user = users.find((user) => user.username === username);
+
+  if (!user) {
+    return response.status(404);
+  }
+
+  request.user = user;
+
+  return next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+
+  const hasAvailability = user.todos.length < 10 || user.pro;
+
+  if (!hasAvailability) {
+    return response.status(403);
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+  const user = users.find((user) => user.username === username);
+
+  if (!checkIfValidUUID(id)) {
+    return response.status(400).json({error: 'Invalid UUID!'});
+  }
+
+  if (!user) {
+    return response.status(404).json({error: 'User not found!'});
+  }
+
+  const todo = user.todos.find((todo) => todo.id === id);
+
+  if (!todo) {
+    return response.status(404).json({error: 'TODO not found!'});
+  }
+
+  request.todo = todo;
+  request.user = user;
+  return next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((user) => user.id === id);
+
+  if (!user) {
+    return response.status(404);
+  }
+
+  request.user = user;
+
+  return next();
 }
 
 app.post('/users', (request, response) => {
